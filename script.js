@@ -5,12 +5,21 @@ let canvas = document.getElementById("snake");
 let context = canvas.getContext("2d");
 let box = 32;
 let snake = [];
+// snake[0] = {
+//   x: 8 * box,
+//   y: 8 * box
+// }
+
 snake[0] = {
   x: 8 * box,
-  y: 8 * box
+  y: 8 * box,
+  direction: {
+    x: 1,
+    y: 0
+  }
 }
 
-let direction = "right";
+// let direction = "right";
 
 let foodLocation = {
   x: Math.floor(Math.random() * 15 + 1) * box,
@@ -23,10 +32,28 @@ function createBG() {
 }
 
 function createSnake() {
-  for (i = 0; i < snake.length; i++) {
+  // for (i = 0; i < snake.length; i++) {
+  //   context.fillStyle = "green";
+  //   context.fillRect(snake[i].x, snake[i].y, box, box);
+  // }
+
+  //Cria cabeça
+  context.drawImage(
+    sprites,
+    254, 0,
+    64, 64,
+    snake[0].x, snake[0].y,
+    box, box
+  );
+
+  // cria o resto do corpo 
+  for (i = 1; i < snake.length - 1; i++) {
     context.fillStyle = "green";
     context.fillRect(snake[i].x, snake[i].y, box, box);
   }
+
+  // cria calda
+  // nada por enquanto
 }
 
 function createFood() {
