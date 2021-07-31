@@ -1,3 +1,6 @@
+const sprites = new Image();
+sprites.src = "./snake-graphics.png";
+
 let canvas = document.getElementById("snake");
 let context = canvas.getContext("2d");
 let box = 32;
