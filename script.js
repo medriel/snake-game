@@ -160,10 +160,21 @@ function startGame() {
 
   let newHead = {
     x: snakeX,
-    y: snakeY
+    y: snakeY,
+    direction: {
+      x: snake[0].direction.x,
+      y: snake[0].direction.y
+    }
   }
 
   snake.unshift(newHead);
+
+  if (snakeX != food.x || snakeY != food.y) {
+    snake.pop(); //pop tira o último elemento da lista
+  } else {
+    food.x = Math.floor(Math.random() * 15 + 1) * box;
+    food.y = Math.floor(Math.random() * 15 + 1) * box;
+  }
 }
 
 let game = setInterval(startGame, 100);
