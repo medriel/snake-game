@@ -30,8 +30,16 @@ function createSnake() {
 }
 
 function createFood() {
-  context.fillStyle = "red";
-  context.fillRect(foodLocation.x, foodLocation.y, box, box);
+  // context.fillStyle = "red";
+  // context.fillRect(foodLocation.x, foodLocation.y, box, box);
+
+  context.drawImage(
+    sprites,           //spritesheet
+    0, 192,            // x = 0 y = 192 (64+64+64) posição inicial do recorte
+    64, 64,            // tamanho do recorte no nosso spritesheet
+    food.x, food.y,    //posição da comida
+    box, box            // tamanho da comida
+  );
 }
 
 document.addEventListener("keydown", update);
