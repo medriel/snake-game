@@ -38,6 +38,28 @@ function createSnake() {
   // }
 
   //Cria cabeça
+  let spriteHeadPosition = {
+    x: 254,
+    y: 0,
+  }
+
+  if (snake[0].direction.x === 1)
+    spriteHeadPosition = { x: 256, y: 0 } //head sprite right
+  if (snake[0].direction.x === -1)
+    spriteHeadPosition = { x: 192, y: 64 } //head sprite left
+  if (snake[0].direction.y === 1)
+    spriteHeadPosition = { x: 256, y: 64 } //head sprite down
+  if (snake[0].direction.y === -1)
+    spriteHeadPosition = { x: 192, y: 0 } //head sprite up
+
+  context.drawImage(
+    sprites,
+    spriteHeadPosition.x, spriteHeadPosition.y,
+    64, 64,
+    snake[0].x, snake[0].y,
+    box, box
+  );
+
   context.drawImage(
     sprites,
     254, 0,
