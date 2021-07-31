@@ -75,7 +75,30 @@ function createSnake() {
   }
 
   // cria calda
-  // nada por enquanto
+  if (snake.length > 1) {
+    //cria calda
+    let spriteTailPosition = {
+      x: 256,
+      y: 128
+    }
+
+    if (snake[snake.length - 1].direction.x > 0)
+      spriteTailPosition = { x: 256, y: 128 }
+    if (snake[snake.length - 1].direction.x < 0)
+      spriteTailPosition = { x: 192, y: 192 }
+    if (snake[snake.length - 1].direction.y > 0)
+      spriteTailPosition = { x: 256, y: 192 }
+    if (snake[snake.length - 1].direction.y < 0)
+      spriteTailPosition = { x: 192, y: 128 }
+
+    context.drawImage(
+      sprites,
+      spriteTailPosition.x, spriteTailPosition.y,
+      64, 64,
+      snake[snake.length - 1].x, snake[snake.length - 1].y,
+      box, box
+    );
+  }
 }
 
 function createFood() {
