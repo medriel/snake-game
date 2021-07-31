@@ -1,225 +1,341 @@
-const sprites = new Image();
-sprites.src = "./snake-graphics.png";
+window.onload = function () {
+  const sprites = new Image();
+  sprites.src = "./snake-graphics.png";
 
-let canvas = document.getElementById("snake");
-let context = canvas.getContext("2d");
-let box = 32;
-let snake = [];
-// snake[0] = {
-//   x: 8 * box,
-//   y: 8 * box
-// }
+  const canvas = document.getElementById("Snake");
+  const scoreElemente = document.getElementById("score");
 
-snake[0] = {
-  x: 8 * box,
-  y: 8 * box,
-  direction: {
+  let box;  // tamanho dos quadrados
+  const boxes = 16; // quantidade des quadrados na area 
+  let score = 0;
+
+  const screenWidth = window.screen.width;
+  const screenHeight = window.screen.height;
+
+  const screenHalfWidth = screenWidth / 2;
+  const screenHalfdHeight = screenHeight / 2;
+
+  if (screenWidth < 512) {
+    canvas.width = Math.floor(screenWidth - 10);
+    canvas.height = Math.floor(screenWidth - 10);
+    box = Math.floor((screenWidth - 10) / 16);
+  } else {
+    canvas.width = 512;
+    canvas.height = 512;
+    box = 32
+  }
+
+  const ctx = canvas.getContext("2d");
+
+  const snake = {
     x: 1,
-    y: 0
-  }
-}
-
-// let direction = "right";
-
-let foodLocation = {
-  x: Math.floor(Math.random() * 15 + 1) * box,
-  y: Math.floor(Math.random() * 15 + 1) * box
-}
-
-function createBG() {
-  context.fillStyle = "lightgreen";
-  context.fillRect(0, 0, 16 * box, 16 * box);
-}
-
-function createSnake() {
-  // for (i = 0; i < snake.length; i++) {
-  //   context.fillStyle = "green";
-  //   context.fillRect(snake[i].x, snake[i].y, box, box);
-  // }
-
-  //Cria cabeça
-  let spriteHeadPosition = {
-    x: 254,
-    y: 0,
+    y: 8,
+    direction: {
+      x: 1,
+      y: 0,
+    }
   }
 
-  if (snake[0].direction.x === 1)
-    spriteHeadPosition = { x: 256, y: 0 } //head sprite right
-  if (snake[0].direction.x === -1)
-    spriteHeadPosition = { x: 192, y: 64 } //head sprite left
-  if (snake[0].direction.y === 1)
-    spriteHeadPosition = { x: 256, y: 64 } //head sprite down
-  if (snake[0].direction.y === -1)
-    spriteHeadPosition = { x: 192, y: 0 } //head sprite up
-
-  context.drawImage(
-    sprites,
-    spriteHeadPosition.x, spriteHeadPosition.y,
-    64, 64,
-    snake[0].x, snake[0].y,
-    box, box
-  );
-
-  context.drawImage(
-    sprites,
-    254, 0,
-    64, 64,
-    snake[0].x, snake[0].y,
-    box, box
-  );
-
-  // cria o resto do corpo 
-  for (i = 1; i < snake.length - 1; i++) {
-    context.fillStyle = "green";
-    context.fillRect(snake[i].x, snake[i].y, box, box);
+  const food = {
+    x: Math.floor(Math.random() * 15 + 1),
+    y: Math.floor(Math.random() * 15 + 1),
   }
 
-  // cria calda
-  if (snake.length > 1) {
-    //cria calda
-    let spriteTailPosition = {
-      x: 256,
-      y: 128
+  const trail = [];
+  let tail = 2;
+
+  const interval = setInterval(game, 1000 / 10); //inicia o jogo
+
+  function game() {
+    update();
+    render();
+    loop();
+  }
+
+  let haveMovementBuffer = false
+
+  document.addEventListener("touchstart", handleTouchPad)
+  function handleTouchPad(event) {
+    const touchX = event.touches[0].clientX;
+    const touchY = event.touches[0].clientY;
+    if (!haveMovementBuffer) {
+      if (snake.direction.x !== 0) {
+        if (touchY < screenHalfdHeight && snake.direction.y !== 1) {
+          snake.direction = { x: 0, y: -1 };
+          haveMovementBuffer = true;
+        }
+        else if (touchY > screenHalfdHeight && snake.direction.y !== -1) {
+          snake.direction = { x: 0, y: 1 };
+          haveMovementBuffer = true;
+        }
+      }
+      else if (snake.direction.y !== 0) {
+        if (touchX < screenHalfWidth && snake.direction.x !== 1) {
+          snake.direction = { x: -1, y: 0 };
+          haveMovementBuffer = true;
+        }
+        else if (touchX > screenHalfWidth && snake.direction.x !== -1) {
+          snake.direction = { x: 1, y: 0 };
+          haveMovementBuffer = true;
+        }
+      }
     }
 
-    if (snake[snake.length - 1].direction.x > 0)
-      spriteTailPosition = { x: 256, y: 128 }
-    if (snake[snake.length - 1].direction.x < 0)
-      spriteTailPosition = { x: 192, y: 192 }
-    if (snake[snake.length - 1].direction.y > 0)
-      spriteTailPosition = { x: 256, y: 192 }
-    if (snake[snake.length - 1].direction.y < 0)
-      spriteTailPosition = { x: 192, y: 128 }
+  }
 
-    context.drawImage(
+  document.addEventListener("keydown", moveSnake);
+  function moveSnake(e) {
+    if (!haveMovementBuffer) {
+      if (e.keyCode === 39 && snake.direction.x !== -1) {
+        snake.direction = { x: 1, y: 0 };
+        haveMovementBuffer = true;
+      }
+      else if (e.keyCode === 40 && snake.direction.y !== -1) {
+        snake.direction = { x: 0, y: 1 };
+        haveMovementBuffer = true;
+      }
+      else if (e.keyCode === 37 && snake.direction.x !== 1) {
+        snake.direction = { x: -1, y: 0 };
+        haveMovementBuffer = true;
+      }
+      else if (e.keyCode === 38 && snake.direction.y !== 1) {
+        snake.direction = { x: 0, y: -1 };
+        haveMovementBuffer = true;
+      }
+    }
+  }
+
+  function update() {
+
+    //snake trail update
+    trail.push({
+      x: snake.x,
+      y: snake.y,
+      anchor: snake.direction
+    });
+
+    //move snake head
+    snake.x += snake.direction.x;
+    snake.y += snake.direction.y;
+
+    // snake atravessa o mapa
+    if (snake.x < 0) snake.x = boxes - 1;
+    else if (snake.x > boxes - 1) snake.x = 0;
+    else if (snake.y < 0) snake.y = boxes - 1;
+    else if (snake.y > boxes - 1) snake.y = 0;
+
+    //border colision
+    // if(snake.x < 0 || snake.x > boxes - 1 || snake.y < 0 || snake.y > boxes - 1){
+    //   gameOver();
+    // }
+
+  }
+
+  function render() {
+
+    //clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+
+    //backgorund
+    ctx.fillStyle = "lightgreen";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    //food
+    ctx.drawImage(
       sprites,
-      spriteTailPosition.x, spriteTailPosition.y,
+      0, 192,
       64, 64,
-      snake[snake.length - 1].x, snake[snake.length - 1].y,
+      food.x * box, food.y * box,
       box, box
     );
+
+    //snake Head
+    drawHead();
+
+    //snake body
+    if (trail.length)
+      drawBody();
+
+    //snake tail
+    ctx.fillStyle = "#888";
+    if (trail.length)
+      drawTail();
+
+    haveMovementBuffer = false;
   }
-}
 
-function createFood() {
-  // context.fillStyle = "red";
-  // context.fillRect(foodLocation.x, foodLocation.y, box, box);
+  function loop() {
 
-  context.drawImage(
-    sprites,           //spritesheet
-    0, 192,            // x = 0 y = 192 (64+64+64) posição inicial do recorte
-    64, 64,            // tamanho do recorte no nosso spritesheet
-    food.x, food.y,    //posição da comida
-    box, box            // tamanho da comida
-  );
-}
+    //body colision check
+    for (i = 0; i < trail.length; i++) {
+      if (trail[i].x === snake.x && trail[i].y === snake.y) {
+        snake.direction = {
+          x: 0,
+          y: 0,
+        }
+        gameOver();
+      }
+    }
 
-document.addEventListener("keydown", update);
+    //snake food check
+    if (snake.x === food.x && snake.y === food.y) {
+      let randomX;
+      let randomY;
 
-function update(event) {
-  // if (event.keyCode == 37 && direction != "right") {
-  //   direction = "left";
-  // }
-  // if (event.keyCode == 38 && direction != "down") {
-  //   direction = "up";
-  // }
-  // if (event.keyCode == 39 && direction != "left") {
-  //   direction = "right";
-  // }
-  // if (event.keyCode == 40 && direction != "up") {
-  //   direction = "down";
-  // }
+      let isClearForDrawFood;
+      do {
+        isClearForDrawFood = true;
+        randomX = Math.floor(Math.random() * 15 + 1);
+        randomY = Math.floor(Math.random() * 15 + 1);
+        for (i = 0; i < trail.length; i++) {
 
-  if (event.keyCode == 37 && snake[0].direction.x != 1) {
-    snake[0].direction = { x: -1, y: 0 }; //left  
+          if (randomX === trail[i].x && randomY === trail[i].y) {
+            isClearForDrawFood = false;
+          }
+          else if (randomX === snake.x && randomY === snake.y) {
+            isClearForDrawFood = false;
+          }
+        }
+
+      } while (!isClearForDrawFood);
+
+      food.x = randomX;
+      food.y = randomY;
+      tail++;
+      score += 10
+      scoreElemente.innerText = " " + score.toLocaleString('pt-BR', { minimumIntegerDigits: 4, useGrouping: false });
+    }
+
+    while (trail.length > tail) {
+      trail.shift();
+    }
+
   }
-  if (event.keyCode == 38 && snake[0].direction.y != 1) {
-    snake[0].direction = { x: 0, y: -1 }; //up  
+
+  function drawHead() {
+    let spritePath = {
+      x: 256,
+      y: 0
+    }
+    const { x, y } = snake.direction;
+
+    if (x === 1) spritePath = { x: 256, y: 0 }
+    else if (x === -1) spritePath = { x: 192, y: 64 }
+    else if (y === 1) spritePath = { x: 256, y: 64 }
+    else if (y === -1) spritePath = { x: 192, y: 0 }
+
+    ctx.drawImage(
+      sprites,
+      spritePath.x, spritePath.y,
+      64, 64,
+      snake.x * box, snake.y * box,
+      box, box
+    );
+
   }
-  if (event.keyCode == 39 && snake[0].direction.x != -1) {
-    snake[0].direction = { x: 1, y: 0 }; //right  
+
+  function drawTail() {
+    let spritePath = {
+      x: 0,
+      y: 128,
+    }
+
+    const { x, y } = trail[0].anchor
+
+    if (x > 0) spritePath = { x: 256, y: 128 }
+    else if (x < 0) spritePath = { x: 192, y: 192 }
+    else if (y > 0) spritePath = { x: 256, y: 192 }
+    else if (y < 0) spritePath = { x: 192, y: 128 }
+
+    ctx.drawImage(
+      sprites,
+      spritePath.x, spritePath.y,
+      64, 64,
+      trail[0].x * box, trail[0].y * box,
+      box, box
+    );
+
   }
-  if (event.keyCode == 40 && snake[0].direction.y != -1) {
-    snake[0].direction = { x: 0, y: 1 }; //down
-  }
-}
 
-function startGame() {
+  function drawBody() {
 
-  // if (snake[0].x > 15 * box && direction == "right") {
-  //   snake[0].x = 0;
-  // }
-  // if (snake[0].x < 0 && direction == "left") {
-  //   snake[0].x = 16 * box;
-  // }
-  // if (snake[0].y > 15 * box && direction == "down") {
-  //   snake[0].y = 0;
-  // }
-  // if (snake[0].y < 0 && direction == "up") {
-  //   snake[0].y = 16 * box;
-  // }
+    let spritePath = {
+      x: 0,
+      y: 128,
+    }
 
-  if (snake[0].x > 15 * box && snake[0].direction.x == 1) snake[0].x = 0;
-  if (snake[0].x < 0 && snake[0].direction.x == -1) snake[0].x = 16 * box;
-  if (snake[0].y > 15 * box && snake[0].direction.y == 1) snake[0].y = 0;
-  if (snake[0].y < 0 && snake[0].direction.y == -1) snake[0].y = 16 * box;
+    for (i = 1; i < trail.length; i++) {
+      let haveRight = haveLeft = haveUp = haveDown = false; //the adjacent positions
 
-  for (i = 1; i < snake.length; i++) {
-    if (snake[0].x == snake[i].x && snake[0].y == snake[i].y) {
-      clearInterval[game];
-      alert("Game Over !!!")
+      const { x, y } = trail[i].anchor
+      let { x: beforeX, y: beforeY } = trail[i - 1].anchor
+
+      //inverte valores
+      beforeX *= -1;
+      beforeY *= -1;
+
+      //next snake node direction
+      if (x > 0) haveRight = true;
+      else if (x < 0) haveLeft = true;
+      else if (y < 0) haveUp = true;
+      else if (y > 0) haveDown = true;
+
+      //prev snake node direction
+      if (beforeX < 0) haveLeft = true;
+      else if (beforeX > 0) haveRight = true;
+      else if (beforeY < 0) haveUp = true;
+      else if (beforeY > 0) haveDown = true;
+
+      //set sprite path
+      if (haveLeft && haveRight) spritePath = { x: 64, y: 0 };
+      else if (haveUp && haveDown) spritePath = { x: 128, y: 64 };
+      else if (haveLeft && haveDown) spritePath = { x: 128, y: 0 };
+      else if (haveLeft && haveUp) spritePath = { x: 128, y: 128 };
+      else if (haveRight && haveDown) spritePath = { x: 0, y: 0 };
+      else if (haveRight && haveUp) spritePath = { x: 0, y: 64 };
+
+      ctx.drawImage(
+        sprites,
+        spritePath.x, spritePath.y,
+        64, 64,
+        trail[i].x * box, trail[i].y * box,
+        box, box
+      );
     }
   }
 
-  createBG();
-  createSnake();
-  createFood();
+  function gameOver() {
 
-  let snakeX = snake[0].x;
-  let snakeY = snake[0].y;
-
-  // if (direction == "right") {
-  //   snakeX += box;
-  // }
-  // if (direction == "left") {
-  //   snakeX -= box;
-  // }
-  // if (direction == "up") {
-  //   snakeY -= box;
-  // }
-  // if (direction == "down") {
-  //   snakeY += box;
-  // }
-
-  if (snake[0].direction.x == 1) snakeX += box;
-  if (snake[0].direction.x == -1) snakeX -= box;
-  if (snake[0].direction.y == -1) snakeY -= box;
-  if (snake[0].direction.y == 1) snakeY += box;
-
-  if (snakeX != foodLocation.x || snakeY != foodLocation.y) {
-    snake.pop();
-  } else {
-    foodLocation.x = Math.floor(Math.random() * 15 + 1) * box,
-      foodLocation.y = Math.floor(Math.random() * 15 + 1) * box
-  }
-
-  let newHead = {
-    x: snakeX,
-    y: snakeY,
-    direction: {
-      x: snake[0].direction.x,
-      y: snake[0].direction.y
+    clearInterval(interval);
+    snake.direction = {
+      x: 0,
+      y: 0
     }
-  }
 
-  snake.unshift(newHead);
+    function reload() {
+      document.addEventListener("keydown", () => location.reload())
+      document.addEventListener("touchstart", () => location.reload())
+    }
 
-  if (snakeX != food.x || snakeY != food.y) {
-    snake.pop(); //pop tira o último elemento da lista
-  } else {
-    food.x = Math.floor(Math.random() * 15 + 1) * box;
-    food.y = Math.floor(Math.random() * 15 + 1) * box;
+    document.removeEventListener("keydown", moveSnake);
+
+    ctx.fillStyle = "#00000065"
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    ctx.fillStyle = "#ffffff"
+    ctx.font = "30px Comic Sans MS";
+    const gameOverText = "Game Over",
+      gameOverTextWidth = ctx.measureText(gameOverText).width;
+
+    ctx.fillText(gameOverText, canvas.width / 2 - gameOverTextWidth / 2, canvas.height / 2 - 15);
+
+    ctx.font = "20px arial seriff";
+    const pressButtonText = "Press any button to restart the game",
+      pressButtonTextWidth = ctx.measureText(pressButtonText).width;
+
+    ctx.fillText(pressButtonText, canvas.width / 2 - pressButtonTextWidth / 2, canvas.height / 2 + 40);
+
+    setTimeout(reload, 1000);
   }
 }
-
-let game = setInterval(startGame, 100);
